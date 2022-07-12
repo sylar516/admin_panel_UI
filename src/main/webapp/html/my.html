@@ -1,11 +1,83 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>RPG</title>
-    <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="/css/my.css" rel="stylesheet">
+    <script>
+        function getAccounts() {
+            $.ajax({
+                type: "GET",
+                url: "/rest/players/",
+                data: {
+                    pageNumber: 0,
+                    pageSize: document.getElementById("choice").value
+                },
+                dataType: "json",
+                success: function (data) {
+                    let trHTML = "";
+                    for (let key in data) {
+                        item = data[key];
+                        trHTML += "<tr><td>" + item.id + "</td>" +
+                            "<td>" + item.name + "</td>" +
+                            "<td>" + item.title + "</td>" +
+                            "<td>" + item.race + "</td>" +
+                            "<td>" + item.profession + "</td>" +
+                            "<td>" + item.level + "</td>" +
+                            "<td>" + item.birthday + "</td>" +
+                            "<td>" + item.banned + "</td></tr>";
+                    }
+                    $("#accounts").append(trHTML);
+                }
+            });
+        }
+        async function getAllCount() {
+            $.ajax({
+                type: "GET",
+                url: "/rest/players/count",
+                dataType: "json",
+                success: function (data) {
+                    // console.log(x/document.getElementById("choice").value);
+                }
+            });
+        }
+        function getPages() {
+            console.log(getAllCount());
+        }
+    </script>
 </head>
 <body>
 <h1>RPG admin panel</h1>
-
+<h2>Accounts list:</h2>
+Count per page:
+<select id="choice" oninput="getAccounts(); getPages();">
+    <option selected>3</option>
+    <option>5</option>
+    <option>10</option>
+    <option>20</option>
+</select>
+<table id="accounts">
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Race</th>
+        <th>Profession</th>
+        <th>Level</th>
+        <th>Birthday</th>
+        <th>Banned</th>
+    </tr>
+</table>
+<div id="paging">
+    Pages:
+    <button>1</button>
+    <button>2</button>
+    <button>3</button>
+    <button>4</button>
+    <button>5</button>
+</div>
+<script>
+    getAccounts();
+    getAllCount();
+</script>
 </body>
 </html>
