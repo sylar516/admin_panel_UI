@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 @Repository
@@ -59,7 +60,12 @@ public class PlayerRepository {
 
     public List<Player> getAll(int pageNumber, int pageSize) {
         return storage.stream()
-                .sorted(Comparator.comparingLong(Player::getId))
+                .sorted(Comparator.comparingLong(new ToLongFunction<Player>() {
+                    @Override
+                    public long applyAsLong(Player player) {
+                        return player.getId();
+                    }
+                }))
                 .skip((long) pageNumber * pageSize)
                 .limit(pageSize)
                 .collect(Collectors.toList());

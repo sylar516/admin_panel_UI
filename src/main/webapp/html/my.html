@@ -3,57 +3,16 @@
     <title>RPG</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="/css/my.css" rel="stylesheet">
-    <script>
-        function getAccounts() {
-            $.ajax({
-                type: "GET",
-                url: "/rest/players/",
-                data: {
-                    pageNumber: 0,
-                    pageSize: document.getElementById("choice").value
-                },
-                dataType: "json",
-                success: function (data) {
-                    let trHTML = "";
-                    for (let key in data) {
-                        item = data[key];
-                        trHTML += "<tr><td>" + item.id + "</td>" +
-                            "<td>" + item.name + "</td>" +
-                            "<td>" + item.title + "</td>" +
-                            "<td>" + item.race + "</td>" +
-                            "<td>" + item.profession + "</td>" +
-                            "<td>" + item.level + "</td>" +
-                            "<td>" + item.birthday + "</td>" +
-                            "<td>" + item.banned + "</td></tr>";
-                    }
-                    $("#accounts").append(trHTML);
-                }
-            });
-        }
-        async function getAllCount() {
-            $.ajax({
-                type: "GET",
-                url: "/rest/players/count",
-                dataType: "json",
-                success: function (data) {
-                    // console.log(x/document.getElementById("choice").value);
-                }
-            });
-        }
-        function getPages() {
-            console.log(getAllCount());
-        }
-    </script>
 </head>
-<body>
+<body onload="show_accounts_list(0)">
 <h1>RPG admin panel</h1>
 <h2>Accounts list:</h2>
-Count per page:
-<select id="choice" oninput="getAccounts(); getPages();">
-    <option selected>3</option>
-    <option>5</option>
-    <option>10</option>
-    <option>20</option>
+<label>Count per page:</label>
+<select id="accounts_per_page" onchange="show_accounts_list(0)">
+    <option value="3">3</option>
+    <option value="7">7</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
 </select>
 <table id="accounts">
     <tr>
@@ -67,17 +26,56 @@ Count per page:
         <th>Banned</th>
     </tr>
 </table>
-<div id="paging">
-    Pages:
-    <button>1</button>
-    <button>2</button>
-    <button>3</button>
-    <button>4</button>
-    <button>5</button>
+<div id="paging_buttons">
+    <label>Pages:</label>
 </div>
 <script>
-    getAccounts();
-    getAllCount();
+    function show_accounts_list(pageNumber) {
+        $("#accounts tr:has(td)").remove();
+        $.ajax({
+            type: "GET",
+            url: "/rest/players?pageNumber=" + pageNumber + "&pageSize=" + document.getElementById("accounts_per_page").value,
+            success: function (response) {
+                let tableHTML = "";
+                $.each(response, function (i, item) {
+                    tableHTML += "<tr><td>"+ item.id +"</td><td>"
+                                + item.name + "</td><td>"
+                                + item.title + "</td><td>"
+                                + item.race + "</td><td>"
+                                + item.profession + "</td><td>"
+                                + item.level + "</td><td>"
+                                + new Date(item.birthday).toLocaleDateString() + "</td><td>"
+                                + item.banned + "</td></tr>";
+                })
+                $("#accounts").append(tableHTML);
+            }
+        });
+
+        let countPages = Math.ceil(get_accounts_count()/document.getElementById("accounts_per_page").value);
+        $("#paging_buttons button").remove();
+        for (let i = 0; i<countPages; i++) {
+            let button_tag = "<button>" + (i + 1) + "</button>";
+            let btn = $(button_tag)
+                .attr('id', "button" + i)
+                .attr('onclick', "show_accounts_list(" + i + ")")
+            $("#paging_buttons").append(btn);
+            console.log(btn);
+        }
+
+        $("#button" + pageNumber).css('color', "red");
+    }
+    function get_accounts_count() {
+        let count;
+        $.ajax({
+            type: "GET",
+            url: "/rest/players/count",
+            async: false,
+            success: function (response) {
+                count = response;
+            }
+        })
+        return count;
+    }
 </script>
 </body>
 </html>
