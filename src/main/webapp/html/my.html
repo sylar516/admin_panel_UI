@@ -4,11 +4,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="/css/my.css" rel="stylesheet">
 </head>
-<body onload="show_accounts_list(0)">
+<body onload="showAccountsList(0)">
 <h1>RPG admin panel</h1>
 <h2>Accounts list:</h2>
 <label>Count per page:</label>
-<select id="accounts_per_page" onchange="show_accounts_list(0)">
+<select id="accounts_per_page" onchange="showAccountsList(0)">
     <option value="3">3</option>
     <option value="7">7</option>
     <option value="10">10</option>
@@ -24,47 +24,51 @@
         <th>Level</th>
         <th>Birthday</th>
         <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
     </tr>
 </table>
 <div id="paging_buttons">
     <label>Pages:</label>
 </div>
 <script>
-    function show_accounts_list(pageNumber) {
+    function showAccountsList(pageNumber) {
         $("#accounts tr:has(td)").remove();
         $.ajax({
             type: "GET",
             url: "/rest/players?pageNumber=" + pageNumber + "&pageSize=" + document.getElementById("accounts_per_page").value,
             success: function (response) {
-                let tableHTML = "";
                 $.each(response, function (i, item) {
-                    tableHTML += "<tr><td>"+ item.id +"</td><td>"
-                                + item.name + "</td><td>"
-                                + item.title + "</td><td>"
-                                + item.race + "</td><td>"
-                                + item.profession + "</td><td>"
-                                + item.level + "</td><td>"
-                                + new Date(item.birthday).toLocaleDateString() + "</td><td>"
-                                + item.banned + "</td></tr>";
-                })
-                $("#accounts").append(tableHTML);
+                    $("<tr>").html("<td>"
+                        + item.id + "</td><td>"
+                        + item.name + "</td><td>"
+                        + item.title + "</td><td>"
+                        + item.race + "</td><td>"
+                        + item.profession + "</td><td>"
+                        + item.level + "</td><td>"
+                        + new Date(item.birthday).toLocaleDateString() + "</td><td>"
+                        + item.banned + "</td><td>"
+                        + "<button id='button_edit_" + item.id + "' onclick='editAccount(" + item.id + ")'><img src='/img/edit.png'></button></td><td>"
+                        + "<button id='button_delete_" + item.id + "' onclick='deleteAccount(" + item.id + ")'><img src='/img/delete.png'></button></td>"
+                    ).appendTo("#accounts");
+                });
             }
         });
 
-        let countPages = Math.ceil(get_accounts_count()/document.getElementById("accounts_per_page").value);
+        let countPages = Math.ceil(getAccountsCount()/document.getElementById("accounts_per_page").value);
         $("#paging_buttons button").remove();
         for (let i = 0; i<countPages; i++) {
             let button_tag = "<button>" + (i + 1) + "</button>";
             let btn = $(button_tag)
                 .attr('id', "button" + i)
-                .attr('onclick', "show_accounts_list(" + i + ")")
+                .attr('onclick', "showAccountsList(" + i + ")")
             $("#paging_buttons").append(btn);
-            console.log(btn);
         }
 
-        $("#button" + pageNumber).css('color', "red");
+        $("#button" + pageNumber).css('color', 'red');
     }
-    function get_accounts_count() {
+
+    function getAccountsCount() {
         let count;
         $.ajax({
             type: "GET",
@@ -75,6 +79,90 @@
             }
         })
         return count;
+    }
+
+    function editAccount(id) {
+        let identifier_delete = "#button_delete_" + id;
+        let identifier_edit = "#button_edit_" + id;
+
+        $(identifier_delete).remove(identifier_delete);
+
+        let save_image_tag = "<img src='/img/save.png'>";
+        $(identifier_edit).html(save_image_tag);
+
+        let trElem = $(identifier_edit).parent().parent();
+        let children = trElem.children();
+
+        let tdName = children[1];
+        tdName.innerHTML = "<input id='input_name_'" + id + "' value='" + tdName.innerHTML + "'>";
+
+        let tdTitle = children[2];
+        tdTitle.innerHTML = "<input id='input_title_'" + id + "' value='" + tdTitle.innerHTML + "'>";
+
+        let tdRace = children[3];
+        let currentRace = tdRace.innerHTML;
+        let raceId = "#selectRace" + id;
+        tdRace.innerHTML = getDropDownRaceList(id);
+        $(raceId).val(currentRace).change();
+        //
+        // let tdProfession = children[4];
+        // tdProfession.innerHTML = "<input id='input_profession_'" + id + "' value='" + tdProfession.innerHTML + "'>";
+        //
+        // let tdBanned = children[7];
+        // tdBanned.innerHTML = "<input id='input_tdBanned_'" + id + "' value='" + tdBanned.innerHTML + "'>";
+
+        // $.ajax({
+        //     type: "POST",
+        //     url: "/rest/players/" + id,
+        //     data: {
+        //         name: tdName,
+        //         title: tdTitle.innerHTML,
+        //         race: tdRace.innerHTML,
+        //         profession: tdProfession.innerHTML,
+        //         banned: tdBanned.innerHTML
+        //     },
+        //     success: function (response) {
+        //         tdName = response.name;
+        //         console.log("tdName после изменения" + tdName);
+        //     }
+        // })
+    }
+
+    function getDropDownRaceList(id) {
+        let raceId = "selectRace" + id;
+        return "<select id =" + raceId + ">" +
+            "<option value='HUMAN'>HUMAN</option>" +
+            "<option value='DWARF'>DWARF</option>" +
+            "<option value='ELF'>ELF</option>" +
+            "<option value='GIANT'>GIANT</option>" +
+            "<option value='ORC'>ORC</option>" +
+            "<option value='TROLL'>TROLL</option>" +
+            "<option value='HOBBIT'>HOBBIT</option>" +
+            "</select>"
+    }
+
+
+
+
+
+
+
+
+    function deleteAccount(id) {
+        $.ajax({
+            type: "DELETE",
+            url: "/rest/players/" + id,
+            success: function (response) {
+                console.log(response);
+                let currentPage = 1;
+                $("#paging_buttons button").each(function () {
+                    if ($(this).css('color') === 'rgb(255, 0, 0)') {
+                        currentPage = $(this).text() - 1;
+                    }
+                });
+                showAccountsList(currentPage);
+            }
+        })
     }
 </script>
 </body>
