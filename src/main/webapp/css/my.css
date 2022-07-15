@@ -1,2 +1,6 @@
-#accounts th, #accounts td {border: 2px double black; padding: 5px}
-div {display: table}
+#accounts th, #accounts td {border: 2px double black; padding: 5px; background-color: aqua}
+div {display: table;}
+div button {margin-left: 10px}
+/*#saveNewPlayer {margin-left: 150px;}*/
+
+.createForm {width: 100px; margin-left: 100px}
